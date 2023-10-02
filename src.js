@@ -1,11 +1,11 @@
 let languageSetting = {
-    RUS:{
+    RU:{
         digits:["три", "четыре", "пять", "шесть", "семь", "восемь", "девять"],
         tens:["двадцать","тридцать","сорок","пятьдесят","шестьдесят","семьдесят","восемдесят","девяносто"],
         fromTenToNineteen:["десять","одиннадцать","двенадцать","тринадцать","четырнадцать","пятнадцать","шестнадцать","семнадцать","восемнадцать","девятнадцать"],
         hundred:["сто","двести","триста","четыреста","пятьсот","шестьсот","семьсот","восемсот","девятьсот"],
-        thousand:["тысяча","тысячи","тысяч"],
-        million:["миллион","миллиона","миллионов"],
+        thousand:["тысяча","тысячи","тысяч","тысяча"],
+        million:["миллион","миллиона","миллионов","миллион"],
         one:["одна","один"],
         two:["две","два"],
         inputANumber:"Введите число",
@@ -17,13 +17,13 @@ let languageSetting = {
         BYN: ["белорусский рубль","белорусских рубля","белорусских рублей","копейка","копейки","копеек"],
         PLN: ["польский злотый","польских злотых","польских злотых","грош","гроша","грошей"]
     },
-    ENG:{
+    EN:{
         digits:["three", "four", "five", "six", "seven", "eight", "nine"],
         tens:["twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"],
-        fromTenToNineteen:["ten","eleven","tvelwe","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"],
+        fromTenToNineteen:["ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"],
         hundred:["one hundred","two hundred","three hundred","four hundred","five hundred","six hundred","seven hundred","eight hundred","nine hundred"],
-        thousand:["thousand","thousand","thousand"],
-        million:["million","million","million"],
+        thousand:["thousand","thousand","thousand","thousand"],
+        million:["million","million","million","million"],
         one:["one","one"],
         two:["two","two"],
         inputANumber:"Input a number",
@@ -34,27 +34,45 @@ let languageSetting = {
         EUR: ["euro","euro","euro","eurocent","eurocent","eurocent"],
         BYN: ["belarusian ruble","belarusian ruble","belarusian ruble","copeck","copeck","copeck"],
         PLN: ["polish zloty","polish zloty","polish zloty","grosh","grosh","grosh"]
+    },
+    PL:{
+        digits:["trzy", "cztery", "pięć", "sześć", "siedem", "osiem", "dziewięć"],
+        tens:["dwadzieścia", "trzydzieści", "czterdzieści", "pięćdziesiąt", "sześćdziesiąt", "siedemdziesiąt", "osiemdziesiąt", "dziewięćdziesiąt"],
+        fromTenToNineteen:["dziesięć", "jedenaście", "dwanaście", "trzynaście","czternaście", "piętnaście", "szesnaście","siedemnaście", "osiemnaście", "dziewiętnaście"],
+        hundred:["sto", "dwieście", "trzysta", "czterysta", "pięćset", "sześćset", "siedemset", "osiemset", "dziewięćset"],
+        thousand:["tysiąc","tysiące","tysięcy","tysięcy"],
+        million:["milion","miliony","milionów","milionów"],
+        one:["jeden","jeden"],
+        two:["dwa","dwa"],
+        inputANumber:"Wpisz numer",
+        chooseCurr:"Wybierz walutę",
+        warn:"Upewnij się, że wpisany numer jest prawidłowy",
+        Default: ["","","","","",""],
+        USD: ["dolar USA","dolary USA","dolarów USA","cent","centy","centów"],
+        EUR: ["euro","euro","euro","eurocent","eurocenty","eurocentów"],
+        BYN: ["rubel białoruski","ruble białoruskie","rubli białoruskich","kopiejka","kopiejki","kopiejek"],
+        PLN: ["polski złoty","polskie złote","polskich złotych","grosz","grosze","groszy"]
     }
 }
 
 var getValue = function(){
     value = document.querySelector('input').value;
     if(!value)return "";
+    if(value.includes(',')){
+        value = value.replace(',','.');
+    }
     if(!value.includes('.')){
-        if(value.includes(',')){
-            value = value.replace(',','.');
-        }else{
             value += ".00";
-        }
     }else if(value.at(-1) == '.'){
         value += "00";
+    }else if(value.includes('.') && !isNaN(+value.at(-1))){
+        value += "0";
     }
     return value;
 }
 
 var handleCurrency = function(){
-    let currency = document.querySelector('select').value;
-    let lang = document.getElementById('lang').value;
+    let currency = document.getElementById('currency').value;
     let interfaceLanguage = handleLanguage();
     return interfaceLanguage[`${currency}`];
 }
@@ -74,7 +92,7 @@ var handleLanguage = function(){
 var transform = function(){
     let value = getValue();
     let lang = handleLanguage();
-    if(value != "" && isNaN(+value)) {
+    if(value != "" && (isNaN(+value) || !(/^[0-9]{1,9}(\.[0-9]{0,3})?$/).test(value))) {              // 
          document.getElementById('result').innerHTML = lang["warn"];
          return;
     }
@@ -96,9 +114,12 @@ var transform = function(){
             let currentClass = value.substring(i + 1,i - 2);
             if (i == 0 || previousDigit != '1') {
                 if (currentDigit == '1') {
-                    if(classCounter == 1)res = currency[0] + res;
-                    if(classCounter == 2)res = lang["thousand"][0] + res;
-                    if(classCounter == 3)res = lang["million"][0] + res;
+                    if(classCounter == 1)
+                        res = currency[0] + res;
+                    if(classCounter == 2)
+                        res = (+currentClass != 1 ? lang["thousand"][3] : lang["thousand"][0]) + res;
+                    if(classCounter == 3)   
+                        res = (+currentClass != 1 ? lang["million"][3] : lang["million"][0]) + res;
                 }
                 if(currentDigit >= '2' && currentDigit <= '4'){
                     if(classCounter == 1)
@@ -108,7 +129,7 @@ var transform = function(){
                     if(classCounter == 3 && +currentClass != 0)
                         res = lang["million"][1] + res;
                 }
-                if((currentDigit >= '5' && currentDigit <= '9') || currentDigit == '0' || previousDigit == '1'){
+                if((currentDigit >= '5' && currentDigit <= '9') || currentDigit == '0'){
                     if(classCounter == 1)
                         res = currency[2] + res;
                     if(classCounter == 2 && +currentClass != 0)
